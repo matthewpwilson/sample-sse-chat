@@ -55,6 +55,18 @@
             <artifactId>microprofile-rest-client-api</artifactId>
             <version>1.2.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile.reactive.messaging</groupId>
+            <artifactId>microprofile-reactive-messaging-api</artifactId>
+            <version>1.0</version>
+            <scope>provided</scope>
+          </dependency>
+          <dependency>
+            <groupId>javax</groupId>
+            <artifactId>javaee-api</artifactId>
+            <version>8.0.1</version>
+            <scope>provided</scope>
+          </dependency>
         <!-- tag::dependencies_test[] -->
 <!--
         <dependency>

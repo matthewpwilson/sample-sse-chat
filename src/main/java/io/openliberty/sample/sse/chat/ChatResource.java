@@ -11,6 +11,7 @@
 package io.openliberty.sample.sse.chat;
 
 import javax.annotation.security.RolesAllowed;
+import javax.enterprise.context.ApplicationScoped;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -24,8 +25,12 @@ import javax.ws.rs.sse.Sse;
 import javax.ws.rs.sse.SseBroadcaster;
 import javax.ws.rs.sse.SseEventSink;
 
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
+
 @Path("chat")
 @RolesAllowed("ChatUsers")
+@ApplicationScoped
 public class ChatResource {
 
     @Context
@@ -37,6 +42,8 @@ public class ChatResource {
     private SseBroadcaster broadcaster;
 
     private SseBroadcaster agentBroadcaster;
+
+    private int counter = 0;
 
     private synchronized SseBroadcaster getOrCreateBroadcaster() {
         if (broadcaster == null) {
@@ -73,6 +80,32 @@ public class ChatResource {
     public void sendMessage(@QueryParam("message") String message) {
         SseBroadcaster b = message.startsWith("/") ? getOrCreateAgentBroadcaster() : getOrCreateBroadcaster();
         b.broadcast(newMessage(secContext.getUserPrincipal().getName(), message));
+    }
+
+    @Outgoing("messages")
+    public String createTestMessage() {
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return "Test message " + counter++;
+    }
+
+    @Incoming("messages")
+    public void sendMessageFromChannel(String message) {
+        System.out.println("Received a message " + message);
+        SseBroadcaster b = getOrCreateBroadcaster();
+        if (b == null) {
+            System.out.println("Broadcaster is null");
+        } else {
+            OutboundSseEvent event = sse.newEvent(message);
+            if (event == null) {
+                System.out.println("Null event created");
+            } else {
+                b.broadcast(event);
+            }
+        }
     }
 
     OutboundSseEvent newMessage(String sender, String message) {
